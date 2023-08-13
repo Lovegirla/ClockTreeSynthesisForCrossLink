@@ -1,0 +1,19 @@
+#clock tree synthesis
+
+##  referenced the paper [1] while coding
+[1]Rajaram, Anand & Pan, David. (2006). Variation tolerant buffered clock network synthesis with cross links. 2006. 157-164. 10.1145/1123008.1123038. 
+[2] ISPD2009 ISPD2010
+## todo
+
+## how to run this project
+git clone https://github.com/Lovegirla/ClockTreeSynthesisForCrossLink.git
+gcc method.cpp -o method
+./method {filename}
+
+for example:
+./method s1_1
+
+## requirments：
+ngspice
+g++11
+boost
