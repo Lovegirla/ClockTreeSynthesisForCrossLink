@@ -8,8 +8,8 @@
 #include <fstream>
 #include <sstream>
 const double max_double_num = std::numeric_limits<unsigned int>::max();
-const double r = 0.001;
-const double c = 0.002;
+const double r = 0.0001;
+const double c = 0.0002;
 const double Cap_Limit = 70;
 struct  TreeNode
 {
@@ -22,6 +22,7 @@ struct  TreeNode
     double cap;
     double delay;
     bool is_sink;
+    bool is_buffer;
     TreeNode *lchild;
     TreeNode *rchild;
 
@@ -147,7 +148,7 @@ double FindEffectiveCap(TreeNode* p){
             C2 = Ceff2 + 0.5*c*GetL1Distance(p,p->rchild);
             double K2 = R2*C2/p->slew; 
         }
-        Ceff = K1*C1 + K2*C2 + 0.5*c*(GetL1Distance(p,p->lchild)+GetL1Distance(p,p->rchild));
+        Ceff = K1*C1 + K2*C2 + 0.05*c*(GetL1Distance(p,p->lchild)+GetL1Distance(p,p->rchild));
         return Ceff;
     }
 }
@@ -272,6 +273,8 @@ TreeNode* DME_Merge(TreeNode *Ti,TreeNode *Tj){
         double l1 = GetSegmentLength(Ti,Tj);
         p = FindNodeInSegment(Ti,Tj,l1);
     }
+    p->lchild = Ti;
+    p->rchild = Tj;
     return p;
 } 
 /* 
@@ -284,6 +287,8 @@ TreeNode* DME_Merge(TreeNode *Ti,TreeNode *Tj){
 double FindMergingCost(TreeNode *Ti,TreeNode *Tj){
     double Cost = DME_Merge_Cost(Ti,Tj);
     TreeNode *p = DME_Merge(Ti,Tj);
+    p->lchild = Ti;
+    p->rchild = Tj;
     double EDSC = FindEffectiveCap(p);
     if(EDSC < Cap_Limit){
         return Cost;
@@ -363,10 +368,28 @@ std::vector<TreeNode*> ReadInputfile(std::string filename){
 
         iss >> id >> x >> y >> capacitance;
         TreeNode *sink = new TreeNode(id,x,y,capacitance);
+        sink->is_sink = true;
         sinks.push_back(sink);
         
     }
     return sinks;
+}
+/* 
+* ==================================================================
+* description: 对点集插入buffer,并返回点集
+* function: InsertBuffer
+* Author: WenJiazhi.
+* ===================================================================
+*/
+std::vector<TreeNode*> InsertBuffer(std::vector<TreeNode*> nodes){
+    std::vector<TreeNode*> new_nodes;
+    for (auto node : nodes)
+    {
+        node->is_buffer = true;
+        new_nodes.push_back(node);
+    }
+    return new_nodes;
+    
 }
 /* 
 * ==================================================================
@@ -392,7 +415,12 @@ void TopLevelFlow(std::vector<TreeNode*> sinks){
             U.erase(std::remove(U.begin(), U.end(), pair.second), U.end());
             U.push_back(p);
         }else{
-            //todo
+            F = InsertBuffer(F);
+            //跟新点的信息；
+            for(auto node : F){
+                U.push_back(node);
+            }
+            F.clear();
         }
     }
 
